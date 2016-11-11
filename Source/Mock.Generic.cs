@@ -84,8 +84,10 @@ namespace Moq
 		{
 		}
 
+#pragma warning disable CS1735 // XML comment has a typeparamref tag, but there is no type parameter by that name
 		/// <include file='Mock.Generic.xdoc' path='docs/doc[@for="Mock{T}.ctor(object[])"]/*'/>
 		[SuppressMessage("Microsoft.Usage", "CA2214:DoNotCallOverridableMethodsInConstructors")]
+#pragma warning restore CS1735 // XML comment has a typeparamref tag, but there is no type parameter by that name
 		public Mock(params object[] args)
 			: this(MockBehavior.Default, args)
 		{
@@ -114,6 +116,7 @@ namespace Moq
 			this.constructorArguments = args;
 			this.ImplementedInterfaces.AddRange(typeof(T).GetInterfaces().Where(i => (i.IsPublic || i.IsNestedPublic) && !i.IsImport));
 			this.ImplementedInterfaces.Add(typeof(IMocked<T>));
+			this.InternallyImplementedInterfaceCount = this.ImplementedInterfaces.Count;
 
 			this.CheckParameters();
 		}

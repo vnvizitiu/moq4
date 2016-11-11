@@ -35,8 +35,7 @@ namespace Moq.Tests
 
 			Assert.False(presenter.Canceled);
 
-			view.Raise(v => v.Canceled += null, EventArgs.Empty);
-
+			view.Raise(v => v.Canceled += null, EventArgs.Empty);         
 			Assert.True(presenter.Canceled);
 		}
 
@@ -595,7 +594,7 @@ namespace Moq.Tests
 			var mock = new Mock<FordawrdEventDoProtectedImplementation>();
 			INotifyPropertyChanged observable = mock.Object;
 			
-			Assert.DoesNotThrow(() => observable.PropertyChanged += (sender, args) => { });
+			observable.PropertyChanged += (sender, args) => { };
 		}
 
 		public delegate void CustomEvent(string message, int value);

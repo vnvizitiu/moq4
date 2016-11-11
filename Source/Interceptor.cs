@@ -113,12 +113,17 @@ namespace Moq
 			InterceptionContext.AddOrderedCall(call);
 		}
 
+	    internal void ClearCalls()
+	    {
+	        calls.Clear();
+	    }
+
 		private IEnumerable<IInterceptStrategy> InterceptionStrategies()
 		{
 			yield return new HandleDestructor();
 			yield return new HandleTracking();
 			yield return new InterceptMockPropertyMixin();
-			yield return new InterceptToStringMixin();
+			yield return new InterceptObjectMethodsMixin();
 			yield return new AddActualInvocation();
 			yield return new ExtractProxyCall();
 			yield return new ExecuteCall();
@@ -164,32 +169,42 @@ namespace Moq
 				}
 
 				var eq = key.fixedString == this.fixedString && key.values.Count == this.values.Count;
+                if(!eq)
+                {
+                    return false;
+                }
 
-				var index = 0;
-				while (eq && index < this.values.Count)
+				for(int index=0; index < values.Count; index++)
 				{
-					eq |= this.values[index] == key.values[index];
-					index++;
+                    if (this.values[index] != key.values[index])
+                    {
+                        return false;
+                    }
 				}
 
 				return eq;
 			}
 
-			public override int GetHashCode()
-			{
-				var hash = fixedString.GetHashCode();
+            public override int GetHashCode()
+            {
+                var hash = fixedString.GetHashCode();
 
-				foreach (var value in values)
-				{
-					if (value != null)
-					{
-						hash ^= value.GetHashCode();
-					}
-				}
+                var factor = 1;
+                foreach (var value in values)
+                {
+                    if (value != null)
+                    {
+                        // we use a factor that increases with each following value (argument)
+                        // so that if the values are in a different order, we get a different hash code
+                        // see GitHub issue #252
+                        hash ^= value.GetHashCode() / factor;
+                    }
+                    factor *= 3;
+                }
 
-				return hash;
-			}
-		}
+                return hash;
+            }
+        }
 
 		private class ConstantsVisitor : ExpressionVisitor
 		{
