@@ -21,9 +21,9 @@ namespace Moq.Tests
 						  select new { Foo = foo, Bar = bar })
 						  .First();
 
-			Assert.Equal(target.Foo.Name, "Foo");
-			Assert.Equal(target.Foo.Find("1").Baz("hello").Value, 1);
-			Assert.Equal(target.Bar.Id, "A");
+			Assert.Equal("Foo", target.Foo.Name);
+			Assert.Equal(1, target.Foo.Find("1").Baz("hello").Value);
+			Assert.Equal("A", target.Bar.Id);
 		}
 
 		[Fact]
@@ -40,12 +40,12 @@ namespace Moq.Tests
 						  select f)
 						  .First();
 
-			Assert.Equal(target.Name, "Foo");
-			Assert.Equal(target.Find("1").Baz("asdf").Value, 99);
-			Assert.Equal(target.Bar.Id, "25");
-			Assert.Equal(target.Bar.Ping("blah"), "ack");
-			Assert.Equal(target.Bar.Ping("error"), "error");
-			Assert.Equal(target.Bar.Baz("foo").Value, 5);
+			Assert.Equal("Foo", target.Name);
+			Assert.Equal(99, target.Find("1").Baz("asdf").Value);
+			Assert.Equal("25", target.Bar.Id);
+			Assert.Equal("ack", target.Bar.Ping("blah"));
+			Assert.Equal("error", target.Bar.Ping("error"));
+			Assert.Equal(5, target.Bar.Baz("foo").Value);
 		}
 
 		[Fact]
@@ -125,21 +125,21 @@ namespace Moq.Tests
 			Assert.Equal("foo", target.Value);
 		}
 
-        [Fact]
-        public void ShouldSupportSettingDtoProtectedPropertyValue()
-        {
-            var target = Mock.Of<Dto>(x => x.ProtectedValue == "foo");
+		[Fact]
+		public void ShouldSupportSettingDtoProtectedPropertyValue()
+		{
+			var target = Mock.Of<Dto>(x => x.ProtectedValue == "foo");
 
-            Assert.Equal("foo", target.ProtectedValue);
-        }
+			Assert.Equal("foo", target.ProtectedValue);
+		}
 
-        [Fact]
-        public void ShouldSupportSettingDtoProtectedVirtualPropertyValue()
-        {
-            var target = Mock.Of<Dto>(x => x.ProtectedVirtualValue == "foo");
+		[Fact]
+		public void ShouldSupportSettingDtoProtectedVirtualPropertyValue()
+		{
+			var target = Mock.Of<Dto>(x => x.ProtectedVirtualValue == "foo");
 
-            Assert.Equal("foo", target.ProtectedVirtualValue);
-        }
+			Assert.Equal("foo", target.ProtectedVirtualValue);
+		}
 
 		[Fact]
 		public void ShouldOneOfCreateNewMock()
@@ -180,11 +180,6 @@ namespace Moq.Tests
 			Assert.Equal("foo", target.Value);
 		}
 
-		public void Do()
-		{
-			Console.WriteLine("Done");
-		}
-
 		public class Dto
 		{
 			public string Value { get; set; }
@@ -217,37 +212,37 @@ namespace Moq.Tests
 		}
 	}
 
-    public class Foo
-    {
-        protected Foo()
-        {
-        }
+	public class Foo
+	{
+		protected Foo()
+		{
+		}
 
-        public virtual string Value { get; private set; }
-    }
+		public virtual string Value { get; private set; }
+	}
 
-    public class FooFixture
-    {
-        [Fact]
-        public void Test()
-        {
-            var remote = Mock.Of<Foo>(rt => rt.Value == "foo");
-            Assert.Equal("foo", remote.Value);
-        }
-    }
+	public class FooFixture
+	{
+		[Fact]
+		public void Test()
+		{
+			var remote = Mock.Of<Foo>(rt => rt.Value == "foo");
+			Assert.Equal("foo", remote.Value);
+		}
+	}
 
-    public interface IBar
-    {
-        Foo Foo { get; set; }
-    }
+	public interface IBar
+	{
+		Foo Foo { get; set; }
+	}
 
-    public class BarFixture
-    {
-        [Fact]
-        public void Test()
-        {
-            var remote = Mock.Of<IBar>(rt => rt.Foo.Value == "foo");
-            Assert.Equal("foo", remote.Foo.Value);
-        }
-    }
+	public class BarFixture
+	{
+		[Fact]
+		public void Test()
+		{
+			var remote = Mock.Of<IBar>(rt => rt.Foo.Value == "foo");
+			Assert.Equal("foo", remote.Foo.Value);
+		}
+	}
 }

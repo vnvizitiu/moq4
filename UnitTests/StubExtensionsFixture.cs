@@ -42,9 +42,9 @@ namespace Moq.Tests
 
 			// Verify defaults
 			Assert.Equal(default(int), mock.Object.ValueProperty);
-			Assert.Equal(null, mock.Object.Object);
-			Assert.Equal(null, mock.Object.Bar);
-			Assert.Equal(null, mock.Object.GetOnly);
+			Assert.Null(mock.Object.Object);
+			Assert.Null(mock.Object.Bar);
+			Assert.Null(mock.Object.GetOnly);
 
 			mock.Object.ValueProperty = 5;
 			Assert.Equal(5, mock.Object.ValueProperty);
@@ -58,15 +58,15 @@ namespace Moq.Tests
 			Assert.Same(bar.Object, mock.Object.Bar);
 		}
 
-        [Fact]
-        public void StubsAllCyrcularDependency()
-        {
-            var mock = new Mock<IHierarchy>();
+		[Fact]
+		public void StubsAllCyrcularDependency()
+		{
+			var mock = new Mock<IHierarchy>();
 
-            mock.SetupAllProperties();
+			mock.SetupAllProperties();
 
-            Assert.Null(mock.Object.Hierarchy);
-        }
+			Assert.Null(mock.Object.Hierarchy);
+		}
 
 		[Fact]
 		public void StubsAllHierarchy()
@@ -138,9 +138,9 @@ namespace Moq.Tests
 			string Name { get; set; }
 		}
 
-	    public interface IHierarchy
-	    {
-            IHierarchy Hierarchy { get; set; }
-	    }
+		public interface IHierarchy
+		{
+			IHierarchy Hierarchy { get; set; }
+		}
 	}
 }

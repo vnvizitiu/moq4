@@ -1,5 +1,5 @@
 ﻿//Copyright (c) 2007. Clarius Consulting, Manas Technology Solutions, InSTEDD
-//http://code.google.com/p/moq/
+//https://github.com/moq/moq4
 //All rights reserved.
 
 //Redistribution and use in source and binary forms, 
@@ -63,5 +63,7 @@ namespace Moq
 		string FileName { get; }
 		int FileLine { get; }
 		MethodBase TestMethod { get; }
+
+		string Format();
 	}
 }

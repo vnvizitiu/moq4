@@ -1,5 +1,5 @@
 ﻿//Copyright (c) 2007. Clarius Consulting, Manas Technology Solutions, InSTEDD
-//http://code.google.com/p/moq/
+//https://github.com/moq/moq4
 //All rights reserved.
 
 //Redistribution and use in source and binary forms, 
@@ -116,8 +116,9 @@ namespace Moq
 		/// </summary>
 		internal static IQueryable<T> CreateMockQuery<T>() where T : class
 		{
+			var method = ((Func<IQueryable<T>>)CreateQueryable<T>).GetMethodInfo();
 			return new MockQueryable<T>(Expression.Call(null,
-				((Func<IQueryable<T>>)CreateQueryable<T>).Method));
+				method));
 		}
 
 		/// <summary>
@@ -149,7 +150,7 @@ namespace Moq
 		/// Extension method used to support Linq-like setup properties that are not virtual but do have 
 		/// a getter and a setter, thereby allowing the use of Linq to Mocks to quickly initialize Dtos too :)
 		/// </summary>
-		internal static bool SetPropery<T, TResult>(Mock<T> target, Expression<Func<T, TResult>> propertyReference, TResult value)
+		internal static bool SetProperty<T, TResult>(Mock<T> target, Expression<Func<T, TResult>> propertyReference, TResult value)
 			where T : class
 		{
 			var memberExpr = (MemberExpression)propertyReference.Body;
@@ -193,7 +194,7 @@ namespace Moq
 			}
 			else
 			{
-				throw new NotSupportedException("Unsupported expression: " + setup.ToStringFixed());
+				throw new NotSupportedException(string.Format(Resources.UnsupportedExpression, setup.ToStringFixed()));
 			}
 
 			info.ReturnType.ThrowIfNotMockeable();

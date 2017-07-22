@@ -1,5 +1,5 @@
 ﻿//Copyright (c) 2007. Clarius Consulting, Manas Technology Solutions, InSTEDD
-//http://code.google.com/p/moq/
+//https://github.com/moq/moq4
 //All rights reserved.
 
 //Redistribution and use in source and binary forms, 
@@ -68,7 +68,11 @@ namespace Moq.Matchers
 				return true;
 			}
 
-			if (this.constantValue is IEnumerable && value is IEnumerable)
+			if (this.constantValue is IEnumerable constantEnumerable && value is IEnumerable enumerable &&
+				constantEnumerable.GetEnumerator() != null && enumerable.GetEnumerator() != null)
+				// the above checks on the second line are necessary to ensure we have usable
+				// implementations of IEnumerable, which might very well not be the case for
+				// mocked objects.
 			{
 				return this.MatchesEnumerable(value);
 			}

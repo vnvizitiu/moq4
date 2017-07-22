@@ -7,18 +7,16 @@ namespace Moq.Tests
 {
 	public class ReturnsFixture
 	{
-#if !SILVERLIGHT
 		[Fact]
 		public void ReturnsValue()
 		{
-			var mock = new Mock<ICloneable>();
+			var mock = new Mock<IBar>();
 			var clone = new object();
 
 			mock.Setup(x => x.Clone()).Returns(clone);
 
 			Assert.Equal(clone, mock.Object.Clone());
 		}
-#endif
 
 		[Fact]
 		public void ReturnsNullValueIfSpecified()
@@ -191,7 +189,7 @@ namespace Moq.Tests
 			var mock = new Mock<IFoo>();
 			mock.SetReturnsDefault(true);
 
-			Assert.Equal(true, mock.Object.ReturnBool());
+			Assert.True(mock.Object.ReturnBool());
 		}
 
 		[Fact]
@@ -258,6 +256,11 @@ namespace Moq.Tests
 			{
 				get { return "Text"; }
 			}
+		}
+
+		public interface IBar
+		{
+			object Clone();
 		}
 	}
 }

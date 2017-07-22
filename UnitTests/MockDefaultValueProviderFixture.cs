@@ -1,5 +1,8 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+#if NETCORE
+using System.Reflection;
+#endif
 using Xunit;
 
 namespace Moq.Tests
@@ -88,6 +91,15 @@ namespace Moq.Tests
 			barMock.Setup(b => b.Do()).Verifiable();
 
 			Assert.Throws<MockVerificationException>(() => mock.Verify());
+		}
+
+		[Fact]
+		public void DefaultValueIsNotChangedWhenPerformingInternalInvocation()
+		{
+			var mockBar = new Mock<IBar> { DefaultValue = DefaultValue.Empty };
+			var mockFoo = new Mock<IFoo>();
+			mockFoo.SetupSet(m => m.Bar = mockBar.Object);
+			Assert.Equal(DefaultValue.Empty, mockBar.DefaultValue);
 		}
 
 		public interface IFoo

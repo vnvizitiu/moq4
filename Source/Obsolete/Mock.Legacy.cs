@@ -1,5 +1,5 @@
 ﻿//Copyright (c) 2007. Clarius Consulting, Manas Technology Solutions, InSTEDD
-//http://code.google.com/p/moq/
+//https://github.com/moq/moq4
 //All rights reserved.
 
 //Redistribution and use in source and binary forms, 
@@ -55,8 +55,8 @@ namespace Moq
 			var prop = expression.ToPropertyInfo();
 			ThrowIfPropertyNotWritable(prop);
 
-			var setter = prop.GetSetMethod();
-			ThrowIfCantOverride(expression, setter);
+			var setter = prop.SetMethod;
+			ThrowIfSetupExpressionInvolvesUnsupportedMember(expression, setter);
 
 			var call = new SetterMethodCall<T, TProperty>(mock, expression, setter, value);
 			var targetInterceptor = GetInterceptor(((MemberExpression)expression.Body).Expression, mock);
@@ -74,8 +74,8 @@ namespace Moq
 			string failMessage)
 			where T : class
 		{
-			var method = expression.ToPropertyInfo().GetSetMethod();
-			ThrowIfVerifyNonVirtual(expression, method);
+			var method = expression.ToPropertyInfo().SetMethod;
+			ThrowIfVerifyExpressionInvolvesUnsupportedMember(expression, method);
 
 			var expected = new SetterMethodCall<T, TProperty>(mock, expression, method)
 			{
@@ -93,8 +93,8 @@ namespace Moq
 			string failMessage)
 			where T : class
 		{
-			var method = expression.ToPropertyInfo().GetSetMethod();
-			ThrowIfVerifyNonVirtual(expression, method);
+			var method = expression.ToPropertyInfo().SetMethod;
+			ThrowIfVerifyExpressionInvolvesUnsupportedMember(expression, method);
 
 			var expected = new SetterMethodCall<T, TProperty>(mock, expression, method, value)
 			{

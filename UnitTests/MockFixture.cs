@@ -1,6 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;
+#if NETCORE
+using System.Reflection;
+#endif
 using Xunit;
 
 namespace Moq.Tests
@@ -44,7 +47,7 @@ namespace Moq.Tests
 			Assert.Contains("mock", mock.ToString().ToLower());
 		}
 
-#if !SILVERLIGHT
+#if FEATURE_CODEDOM
 		[Fact]
 		public void HasADefaultNameThatIncludesItsGenericParameters()
 		{
@@ -232,7 +235,7 @@ namespace Moq.Tests
 			Assert.False(String.IsNullOrEmpty(mock.Object.ToString()));
 		}
 
-		[Fact(Skip = "Castle.DynamicProxy2 doesn't seem to call interceptors for ToString, GetHashCode & Equals")]
+		[Fact]
 		public void OverridesObjectMethods()
 		{
 			var mock = new Mock<IFoo>();
@@ -366,7 +369,7 @@ namespace Moq.Tests
 			// Should also construct without args.
 			mock = new Mock<FooWithConstructors>(MockBehavior.Default);
 
-			Assert.Equal(null, mock.Object.StringValue);
+			Assert.Null(mock.Object.StringValue);
 			Assert.Equal(0, mock.Object.IntValue);
 		}
 
@@ -384,7 +387,7 @@ namespace Moq.Tests
 		{
 			var mock = new Mock<ClassWithNoDefaultConstructor>(MockBehavior.Default, null, 26);
 
-			Assert.Equal(null, mock.Object.StringValue);
+			Assert.Null(mock.Object.StringValue);
 			Assert.Equal(26, mock.Object.IntValue);
 		}
 
@@ -860,7 +863,7 @@ namespace Moq.Tests
 			target.Setup(x => x.ExecuteArray(new string[] { argument, It.IsAny<string>() })).Returns(expected);
 
 			string ret = target.Object.ExecuteArray(new string[] { argument, "baz" });
-			Assert.Equal(null, ret);
+			Assert.Null(ret);
 		}
 
 		[Fact]

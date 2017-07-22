@@ -1,5 +1,5 @@
 ﻿//Copyright (c) 2007. Clarius Consulting, Manas Technology Solutions, InSTEDD
-//http://code.google.com/p/moq/
+//https://github.com/moq/moq4
 //All rights reserved.
 
 //Redistribution and use in source and binary forms, 
@@ -101,11 +101,10 @@ namespace Moq
 		private Exception thrownException;
 		private Action<object[]> setupCallback;
 		private List<IMatcher> argumentMatchers = new List<IMatcher>();
-		private bool isOnce;
 		private EventInfo mockEvent;
 		private Delegate mockEventArgsFunc;
 		private object[] mockEventArgsParams;
-		private int? expectedCallCount = null;
+		private int? expectedMaxCallCount;
 		protected Condition condition;
 		private List<KeyValuePair<int, object>> outValues = new List<KeyValuePair<int, object>>();
 		private static readonly IEqualityComparer<Type> typesComparer = new TypeEqualityComparer();
@@ -184,15 +183,11 @@ namespace Moq
 		{
 			try
 			{
+#if !NETCORE
 				var thisMethod = MethodBase.GetCurrentMethod();
 				var mockAssembly = Assembly.GetExecutingAssembly();
-
 				// Move 'till we're at the entry point into Moq API
-#if !SILVERLIGHT
 				var frame = new StackTrace(true)
-#else
-				var frame = new StackTrace()
-#endif
 					.GetFrames()
 					.SkipWhile(f => f.GetMethod() != thisMethod)
 					.SkipWhile(f => f.GetMethod().DeclaringType == null || f.GetMethod().DeclaringType.Assembly == mockAssembly)
@@ -201,11 +196,10 @@ namespace Moq
 				if (frame != null)
 				{
 					this.FileLine = frame.GetFileLineNumber();
-#if !SILVERLIGHT
 					this.FileName = Path.GetFileName(frame.GetFileName());
-#endif
 					this.TestMethod = frame.GetMethod();
 				}
+#endif
 			}
 			catch
 			{
@@ -225,11 +219,6 @@ namespace Moq
 
 		public virtual bool Matches(ICallContext call)
 		{
-			if (condition != null && !condition.IsTrue)
-			{
-				return false;
-			}
-
 			var parameters = call.Method.GetParameters();
 			var args = new List<object>();
 			for (int i = 0; i < parameters.Length; i++)
@@ -250,7 +239,7 @@ namespace Moq
 					}
 				}
 
-				return true;
+				return condition == null || condition.IsTrue;
 			}
 
 			return false;
@@ -278,18 +267,20 @@ namespace Moq
 
 			this.CallCount++;
 
-			if (this.isOnce && this.CallCount > 1)
+			if (expectedMaxCallCount.HasValue && this.CallCount > expectedMaxCallCount)
 			{
-				throw new MockException(
-					MockException.ExceptionReason.MoreThanOneCall,
-					Times.Once().GetExceptionMessage(FailMessage, SetupExpression.ToStringFixed(), this.CallCount));
-			}
-
-			if (expectedCallCount.HasValue && this.CallCount > expectedCallCount)
-			{
-				throw new MockException(
-					MockException.ExceptionReason.MoreThanNCalls,
-					Times.AtMost(expectedCallCount.Value).GetExceptionMessage(FailMessage, SetupExpression.ToStringFixed(), CallCount));
+				if (expectedMaxCallCount == 1)
+				{
+					throw new MockException(
+						MockException.ExceptionReason.MoreThanOneCall,
+						Times.AtMostOnce().GetExceptionMessage(FailMessage, SetupExpression.ToStringFixed(), this.CallCount));
+				}
+				else
+				{
+					throw new MockException(
+						MockException.ExceptionReason.MoreThanNCalls,
+						Times.AtMost(expectedMaxCallCount.Value).GetExceptionMessage(FailMessage, SetupExpression.ToStringFixed(), this.CallCount));
+				}
 			}
 
 			if (this.mockEvent != null)
@@ -301,7 +292,7 @@ namespace Moq
 				else
 				{
 					var argsFuncType = mockEventArgsFunc.GetType();
-					if (argsFuncType.IsGenericType && argsFuncType.GetGenericArguments().Length == 1)
+					if (argsFuncType.GetTypeInfo().IsGenericType && argsFuncType.GetGenericArguments().Length == 1)
 					{
 						this.Mock.DoRaise(this.mockEvent, (EventArgs)mockEventArgsFunc.InvokePreserveStack());
 					}
@@ -340,7 +331,7 @@ namespace Moq
 		protected virtual void SetCallbackWithArguments(Delegate callback)
 		{
 			var expectedParams = this.Method.GetParameters();
-			var actualParams = callback.Method.GetParameters();
+			var actualParams = callback.GetMethodInfo().GetParameters();
 
 			if (!callback.HasCompatibleParameterList(expectedParams))
 			{
@@ -354,7 +345,7 @@ namespace Moq
 		{
 			throw new ArgumentException(string.Format(
 				CultureInfo.CurrentCulture,
-				"Invalid callback. Setup on method with parameters ({0}) cannot invoke callback with parameters ({1}).",
+				Resources.InvalidCallbackParameterMismatch,
 				string.Join(",", expected.Select(p => p.ParameterType.Name).ToArray()),
 				string.Join(",", actual.Select(p => p.ParameterType.Name).ToArray())
 			));
@@ -399,22 +390,19 @@ namespace Moq
 			return false;
 		}
 
-		public IVerifies AtMostOnce()
-		{
-			this.isOnce = true;
-			return this;
-		}
+		public IVerifies AtMostOnce() => this.AtMost(1);
 
 		public IVerifies AtMost(int callCount)
 		{
-			this.expectedCallCount = callCount;
+			this.expectedMaxCallCount = callCount;
 			return this;
 		}
 
 		protected IVerifies RaisesImpl<TMock>(Action<TMock> eventExpression, Delegate func)
 			where TMock : class
 		{
-			this.mockEvent = eventExpression.GetEvent((TMock)Mock.Object);
+			var ev = eventExpression.GetEvent((TMock)Mock.Object);
+			this.mockEvent = ev.MemberInfo;
 			this.mockEventArgsFunc = func;
 			return this;
 		}
@@ -422,7 +410,8 @@ namespace Moq
 		protected IVerifies RaisesImpl<TMock>(Action<TMock> eventExpression, params object[] args)
 			where TMock : class
 		{
-			this.mockEvent = eventExpression.GetEvent((TMock)Mock.Object);
+			var ev = eventExpression.GetEvent((TMock)Mock.Object);
+			this.mockEvent = ev.MemberInfo;
 			this.mockEventArgsParams = args;
 			return this;
 		}
@@ -451,6 +440,28 @@ namespace Moq
 			}
 
 			return message.ToString().Trim();
+		}
+
+		public string Format()
+		{
+			var builder = new StringBuilder();
+			builder.Append(this.SetupExpression.PartialMatcherAwareEval().ToLambda().ToStringFixed());
+
+			if (this.expectedMaxCallCount != null)
+			{
+				if (this.expectedMaxCallCount == 1)
+				{
+					builder.Append(", Times.AtMostOnce()");
+				}
+				else
+				{
+					builder.Append(", Times.AtMost(");
+					builder.Append(this.expectedMaxCallCount.Value);
+					builder.Append(")");
+				}
+			}
+
+			return builder.ToString();
 		}
 	}
 
